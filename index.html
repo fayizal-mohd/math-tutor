@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MathQuest-V2</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="app-title">
+                    <h1>MathQuest-V2</h1>
+                    <div class="version-badge">Year 5</div>
+                </div>
+                <div class="header-stats">
+                    <div class="stat-item">
+                        <span class="stat-icon">⭐</span>
+                        <span class="stat-value" id="totalStars">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">🏆</span>
+                        <span class="stat-value" id="totalXP">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">🔥</span>
+                        <span class="stat-value" id="streak">0</span>
+                    </div>
+                </div>
+                <button class="btn btn--secondary" id="parentControlsBtn">Parent Controls</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Progress Section -->
+            <div class="progress-section">
+                <div class="year-progress">
+                    <h2>Year <span id="currentYearDisplay">5</span> Progress</h2>
+                    <div class="difficulty-tabs">
+                        <button class="difficulty-tab active" data-difficulty="easy">Easy</button>
+                        <button class="difficulty-tab" data-difficulty="medium">Medium</button>
+                        <button class="difficulty-tab" data-difficulty="hard">Hard</button>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                        <div class="progress-text">
+                            <span id="progressText">0/10 questions</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question Section -->
+            <div class="question-section">
+                <div class="card">
+                    <div class="card__body">
+                        <div class="question-header">
+                            <div class="difficulty-indicator" id="difficultyIndicator">Easy</div>
+                            <div class="question-number">Question <span id="questionNumber">1</span></div>
+                        </div>
+                        <div class="question-content" id="questionContent">
+                            <p>Loading question...</p>
+                        </div>
+                        <div class="answer-section">
+                            <input type="text" class="form-control answer-input" id="answerInput" placeholder="Enter your answer...">
+                            <div class="answer-buttons">
+                                <button class="btn btn--primary" id="submitBtn">Submit Answer</button>
+                                <button class="btn btn--secondary" id="skipBtn">Skip Question</button>
+                            </div>
+                        </div>
+                        <div class="feedback-section" id="feedbackSection"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Achievements Section -->
+            <div class="achievements-section">
+                <h3>Recent Achievements</h3>
+                <div class="badges-container" id="badgesContainer">
+                    <!-- Badges will be populated dynamically -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Parent Controls Modal -->
+        <div class="modal hidden" id="parentModal">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Parent Controls</h3>
+                    <button class="modal-close" id="closeParentModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="pin-entry" id="pinEntry">
+                        <div class="form-group">
+                            <label class="form-label">Enter Parent PIN:</label>
+                            <input type="password" class="form-control" id="parentPinInput" placeholder="Enter PIN">
+                            <button class="btn btn--primary mt-8" id="validatePinBtn">Enter</button>
+                        </div>
+                    </div>
+                    <div class="parent-controls hidden" id="parentControls">
+                        <div class="controls-grid">
+                            <div class="control-item">
+                                <label class="form-label">Reset Progress</label>
+                                <button class="btn btn--secondary" id="resetProgressBtn">Reset All Progress</button>
+                            </div>
+                            <div class="control-item">
+                                <label class="form-label">Change Year Level</label>
+                                <select class="form-control" id="yearSelect">
+                                    <option value="1">Year 1</option>
+                                    <option value="2">Year 2</option>
+                                    <option value="3">Year 3</option>
+                                    <option value="4">Year 4</option>
+                                    <option value="5" selected>Year 5</option>
+                                    <option value="6">Year 6</option>
+                                </select>
+                            </div>
+                            <div class="control-item">
+                                <label class="form-label">View Statistics</label>
+                                <div class="stats-display" id="statsDisplay">
+                                    <!-- Stats will be populated -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Celebration Modal -->
+        <div class="modal hidden" id="celebrationModal">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content celebration-content">
+                <div class="celebration-header">
+                    <div class="celebration-stars">⭐⭐⭐</div>
+                    <h2 id="celebrationTitle">Well Done!</h2>
+                    <p id="celebrationMessage">You've completed this difficulty level!</p>
+                </div>
+                <div class="celebration-stats" id="celebrationStats"></div>
+                <button class="btn btn--primary" id="continueBtn">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
