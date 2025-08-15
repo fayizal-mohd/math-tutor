@@ -573,7 +573,7 @@ class MathQuestApp {
         }
     }
 
-    showApp() {
+    async showApp() {
         document.getElementById('authContainer').classList.add('hidden');
         document.getElementById('appContainer').classList.remove('hidden');
 
@@ -587,18 +587,46 @@ class MathQuestApp {
                     </div>
                 </div>
             `;
+            this.bindEvents(); // Bind parent-specific events
         } else {
-            this.loadState();
+            await this.loadState(); // Await loading state before proceeding
             this.bindEvents();
-            this.updateUI();
             this.loadNextQuestion();
         }
     }
     
+    async handleSaveApiKey() {
+        const apiKey = document.getElementById('geminiApiKeyInput').value.trim();
+        if (!apiKey) {
+            alert('Please enter an API key.');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/config/gemini', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ apiKey, role: this.user.role })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert('API key saved successfully!');
+            } else {
+                alert(`Error: ${result.message}`);
+            }
+        } catch (error) {
+            console.error('Error saving API key:', error);
+            alert('An error occurred while saving the API key.');
+        }
+    }
+
     openParentControls() {
         if (this.user && this.user.role === 'parent') {
             document.getElementById('parentModal').classList.remove('hidden');
             this.updateParentStats();
+            document.getElementById('saveApiKeyBtn').addEventListener('click', () => this.handleSaveApiKey());
         } else {
             alert('You must be logged in as a parent to access this feature.');
         }
@@ -690,30 +718,62 @@ class MathQuestApp {
     }
     
     // State Management
-    saveState() {
+    async saveState() {
+        if (!this.user || this.user.role !== 'student') return;
+
         try {
-            const state = {
-                playerState: this.playerState,
+            const stateToSave = {
+                userId: this.user.id,
+                totalStars: this.playerState.totalStars,
+                totalXP: this.playerState.totalXP,
+                streak: this.playerState.streak,
+                currentStreak: this.playerState.currentStreak,
+                badges: this.playerState.badges,
                 progressData: this.progressData,
                 currentYear: this.currentYear,
                 currentDifficulty: this.currentDifficulty,
                 questionNumber: this.questionNumber
             };
-            // Note: Using console.log instead of localStorage due to sandbox restrictions
-            console.log('Saving state:', state);
+
+            await fetch('/api/progress', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(stateToSave)
+            });
         } catch (error) {
-            console.log('Could not save state:', error);
+            console.error('Could not save state:', error);
         }
     }
     
-    loadState() {
+    async loadState() {
+        if (!this.user || this.user.role !== 'student') return;
+
         try {
-            // Note: In a real app this would load from localStorage
-            // For sandbox environment, we'll use default values
-            console.log('Loading default state');
+            const response = await fetch(`/api/progress/${this.user.id}`);
+            const result = await response.json();
+
+            if (result.success && result.progress) {
+                const progress = result.progress;
+                this.playerState.totalStars = progress.totalStars;
+                this.playerState.totalXP = progress.totalXP;
+                this.playerState.streak = progress.streak;
+                this.playerState.currentStreak = progress.currentStreak;
+                this.playerState.badges = progress.badges;
+                this.progressData = progress.progressData;
+                this.currentYear = progress.currentYear;
+                this.currentDifficulty = progress.currentDifficulty;
+                this.questionNumber = progress.questionNumber;
+
+                console.log('State loaded successfully.');
+            } else {
+                console.log('No saved state found, using defaults.');
+            }
         } catch (error) {
-            console.log('Could not load state, using defaults:', error);
+            console.error('Could not load state, using defaults:', error);
         }
+
+        // Always update UI after attempting to load state
+        this.updateUI();
     }
 }
 

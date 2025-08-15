@@ -1080,6 +1080,19 @@ select.form-control {
   gap: var(--space-24);
 }
 
+.control-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.api-key-input-group {
+    display: flex;
+    gap: 10px;
+}
+
+.api-key-input-group input {
+    flex-grow: 1;
+}
+
 .control-item {
   display: grid;
   gap: var(--space-8);
