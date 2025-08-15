@@ -69,28 +69,52 @@ class MathQuestApp {
         document.getElementById('registerForm').classList.toggle('hidden', !showRegister);
     }
     
+    logout() {
+        this.user = null;
+        document.getElementById('authContainer').classList.remove('hidden');
+        document.getElementById('appContainer').classList.add('hidden');
+        // Reset the main content for the next login
+        document.querySelector('.main-content').innerHTML = `
+            <!-- Original main content structure -->
+            <div class="progress-section">...</div>
+            <div class="question-section">...</div>
+            <div class="achievements-section">...</div>
+        `;
+        // This is a simplified reset. A full-featured app would re-render the original HTML.
+        // For this app, we'll just reload the page to get a clean state.
+        window.location.reload();
+    }
+
     bindEvents() {
-        // Answer input and submission
-        document.getElementById('submitBtn').addEventListener('click', () => this.submitAnswer());
-        document.getElementById('skipBtn').addEventListener('click', () => this.skipQuestion());
+        // Logout button
+        document.getElementById('logoutBtn').addEventListener('click', () => this.logout());
+
+        // Parent controls
+        document.getElementById('parentControlsBtn').addEventListener('click', () => this.openParentControls());
+        document.getElementById('closeParentModal').addEventListener('click', () => this.closeParentControls());
         
-        // Difficulty tabs
+        // These might not exist for parent view, so check for them
+        const submitBtn = document.getElementById('submitBtn');
+        if (submitBtn) submitBtn.addEventListener('click', () => this.submitAnswer());
+
+        const skipBtn = document.getElementById('skipBtn');
+        if (skipBtn) skipBtn.addEventListener('click', () => this.skipQuestion());
+
         document.querySelectorAll('.difficulty-tab').forEach(tab => {
             tab.addEventListener('click', (e) => {
                 this.changeDifficulty(e.target.dataset.difficulty);
             });
         });
+
+        const resetProgressBtn = document.getElementById('resetProgressBtn');
+        if(resetProgressBtn) resetProgressBtn.addEventListener('click', () => this.resetProgress());
+
+        const yearSelect = document.getElementById('yearSelect');
+        if(yearSelect) yearSelect.addEventListener('change', (e) => this.changeYear(parseInt(e.target.value)));
         
-        // Parent controls
-        document.getElementById('parentControlsBtn').addEventListener('click', () => this.openParentControls());
-        document.getElementById('closeParentModal').addEventListener('click', () => this.closeParentControls());
-        document.getElementById('resetProgressBtn').addEventListener('click', () => this.resetProgress());
-        document.getElementById('yearSelect').addEventListener('change', (e) => this.changeYear(parseInt(e.target.value)));
+        const continueBtn = document.getElementById('continueBtn');
+        if(continueBtn) continueBtn.addEventListener('click', () => this.closeCelebration());
         
-        // Celebration modal
-        document.getElementById('continueBtn').addEventListener('click', () => this.closeCelebration());
-        
-        // Modal backdrop clicks
         document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
             backdrop.addEventListener('click', (e) => {
                 if (e.target === backdrop) {
@@ -99,8 +123,9 @@ class MathQuestApp {
             });
         });
         
-        // Initial answer input setup
-        this.setupAnswerInput();
+        if (this.user.role === 'student') {
+            this.setupAnswerInput();
+        }
     }
     
     // BUG FIX 2: Enhanced answer input setup with proper event handling
@@ -577,8 +602,12 @@ class MathQuestApp {
         document.getElementById('authContainer').classList.add('hidden');
         document.getElementById('appContainer').classList.remove('hidden');
 
-        // If the user is a parent, hide the main game content and show a message.
+        const parentControlsBtn = document.getElementById('parentControlsBtn');
+        const headerActions = document.querySelector('.header-actions');
+        headerActions.style.display = 'flex';
+
         if (this.user.role === 'parent') {
+            parentControlsBtn.style.display = 'inline-flex';
             document.querySelector('.main-content').innerHTML = `
                 <div class="card">
                     <div class="card__body">
@@ -587,9 +616,10 @@ class MathQuestApp {
                     </div>
                 </div>
             `;
-            this.bindEvents(); // Bind parent-specific events
+            this.bindEvents();
         } else {
-            await this.loadState(); // Await loading state before proceeding
+            parentControlsBtn.style.display = 'none';
+            await this.loadState();
             this.bindEvents();
             this.loadNextQuestion();
         }
