@@ -1,0 +1,16 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "student1",
+      "password": "password1",
+      "role": "student"
+    },
+    {
+      "id": 2,
+      "username": "parent1",
+      "password": "password1",
+      "role": "parent"
+    }
+  ]
+}

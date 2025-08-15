@@ -1,0 +1,15 @@
+{
+  "name": "mathquest-v2",
+  "version": "1.0.0",
+  "description": "A math tutor application",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node api_test.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "body-parser": "^1.20.2",
+    "axios": "^1.4.0"
+  }
+}

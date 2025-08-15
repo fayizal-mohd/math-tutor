@@ -1,6 +1,7 @@
 // MathQuest-V2 Application
 class MathQuestApp {
     constructor() {
+        this.user = null;
         this.currentYear = 5;
         this.currentDifficulty = 'easy';
         this.currentQuestion = null;
@@ -20,59 +21,11 @@ class MathQuestApp {
         // Initialize recent questions tracking
         this.initializeRecentQuestions();
         
-        // Question banks for Year 5
-        this.questionBanks = {
-            5: {
-                easy: [
-                    { question: "What is 7 + 8?", answer: 15, type: "addition" },
-                    { question: "What is 12 - 5?", answer: 7, type: "subtraction" },
-                    { question: "What is 6 × 4?", answer: 24, type: "multiplication" },
-                    { question: "What is 18 ÷ 2?", answer: 9, type: "division" },
-                    { question: "What is 9 + 6?", answer: 15, type: "addition" },
-                    { question: "What is 15 - 7?", answer: 8, type: "subtraction" },
-                    { question: "What is 8 × 3?", answer: 24, type: "multiplication" },
-                    { question: "What is 21 ÷ 3?", answer: 7, type: "division" },
-                    { question: "What is 11 + 9?", answer: 20, type: "addition" },
-                    { question: "What is 16 - 9?", answer: 7, type: "subtraction" },
-                    { question: "What is 7 × 5?", answer: 35, type: "multiplication" },
-                    { question: "What is 24 ÷ 4?", answer: 6, type: "division" }
-                ],
-                medium: [
-                    { question: "What is 23 + 47?", answer: 70, type: "addition" },
-                    { question: "What is 84 - 39?", answer: 45, type: "subtraction" },
-                    { question: "What is 12 × 7?", answer: 84, type: "multiplication" },
-                    { question: "What is 96 ÷ 8?", answer: 12, type: "division" },
-                    { question: "What is 56 + 38?", answer: 94, type: "addition" },
-                    { question: "What is 73 - 26?", answer: 47, type: "subtraction" },
-                    { question: "What is 15 × 6?", answer: 90, type: "multiplication" },
-                    { question: "What is 72 ÷ 9?", answer: 8, type: "division" },
-                    { question: "What is 45 + 29?", answer: 74, type: "addition" },
-                    { question: "What is 91 - 37?", answer: 54, type: "subtraction" },
-                    { question: "What is 13 × 8?", answer: 104, type: "multiplication" },
-                    { question: "What is 84 ÷ 7?", answer: 12, type: "division" }
-                ],
-                hard: [
-                    { question: "What is 147 + 268?", answer: 415, type: "addition" },
-                    { question: "What is 524 - 187?", answer: 337, type: "subtraction" },
-                    { question: "What is 24 × 15?", answer: 360, type: "multiplication" },
-                    { question: "What is 144 ÷ 12?", answer: 12, type: "division" },
-                    { question: "What is 236 + 179?", answer: 415, type: "addition" },
-                    { question: "What is 403 - 156?", answer: 247, type: "subtraction" },
-                    { question: "What is 18 × 23?", answer: 414, type: "multiplication" },
-                    { question: "What is 156 ÷ 13?", answer: 12, type: "division" },
-                    { question: "What is 325 + 198?", answer: 523, type: "addition" },
-                    { question: "What is 672 - 284?", answer: 388, type: "subtraction" },
-                    { question: "What is 19 × 17?", answer: 323, type: "multiplication" },
-                    { question: "What is 168 ÷ 14?", answer: 12, type: "division" }
-                ]
-            }
-        };
         
         this.progressData = {
             5: { easy: 0, medium: 0, hard: 0 }
         };
         
-        this.loadState();
         this.initializeApp();
     }
     
@@ -95,9 +48,25 @@ class MathQuestApp {
     }
     
     initializeApp() {
-        this.bindEvents();
-        this.updateUI();
-        this.loadNextQuestion();
+        this.bindAuthEvents();
+    }
+
+    bindAuthEvents() {
+        document.getElementById('loginBtn').addEventListener('click', () => this.handleLogin());
+        document.getElementById('registerBtn').addEventListener('click', () => this.handleRegister());
+        document.getElementById('showRegister').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.toggleAuthForms();
+        });
+        document.getElementById('showLogin').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.toggleAuthForms(false);
+        });
+    }
+
+    toggleAuthForms(showRegister = true) {
+        document.getElementById('loginForm').classList.toggle('hidden', showRegister);
+        document.getElementById('registerForm').classList.toggle('hidden', !showRegister);
     }
     
     bindEvents() {
@@ -115,7 +84,6 @@ class MathQuestApp {
         // Parent controls
         document.getElementById('parentControlsBtn').addEventListener('click', () => this.openParentControls());
         document.getElementById('closeParentModal').addEventListener('click', () => this.closeParentControls());
-        document.getElementById('validatePinBtn').addEventListener('click', () => this.validatePin());
         document.getElementById('resetProgressBtn').addEventListener('click', () => this.resetProgress());
         document.getElementById('yearSelect').addEventListener('change', (e) => this.changeYear(parseInt(e.target.value)));
         
@@ -265,50 +233,30 @@ class MathQuestApp {
         this.loadNextQuestion();
     }
     
-    // BUG FIX 1: Implement question sampling with repetition prevention
-    getRandomQuestion() {
-        const questions = this.questionBanks[this.currentYear]?.[this.currentDifficulty];
-        if (!questions || questions.length === 0) {
-            return { question: "No questions available", answer: 0, type: "error" };
-        }
-        
-        const recentQuestions = this.playerState.recentQuestions[this.currentYear][this.currentDifficulty];
-        
-        // Get questions that haven't been used recently
-        const availableQuestions = questions.filter(q => 
-            !recentQuestions.includes(q.question)
-        );
-        
-        let selectedQuestion;
-        
-        if (availableQuestions.length === 0) {
-            // All questions have been used, reset the recent questions list
-            this.playerState.recentQuestions[this.currentYear][this.currentDifficulty] = [];
-            selectedQuestion = questions[Math.floor(Math.random() * questions.length)];
-        } else {
-            // Pick from available questions
-            selectedQuestion = availableQuestions[Math.floor(Math.random() * availableQuestions.length)];
-        }
-        
-        // Add to recent questions
-        this.playerState.recentQuestions[this.currentYear][this.currentDifficulty].push(selectedQuestion.question);
-        
-        // Keep only the last N questions (where N is roughly half the total questions available)
-        const maxRecent = Math.max(1, Math.floor(questions.length / 2));
-        if (this.playerState.recentQuestions[this.currentYear][this.currentDifficulty].length > maxRecent) {
-            this.playerState.recentQuestions[this.currentYear][this.currentDifficulty].shift();
-        }
-        
-        return selectedQuestion;
-    }
-    
-    loadNextQuestion() {
+    async loadNextQuestion() {
         // BUG FIX 2: Always recreate the answer input with proper event handling
         this.recreateAnswerInput();
         
-        this.currentQuestion = this.getRandomQuestion();
-        this.renderQuestion();
-        this.clearFeedback();
+        try {
+            const response = await fetch('/api/question', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ year: this.currentYear, difficulty: this.currentDifficulty })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.currentQuestion = result.question;
+                this.renderQuestion();
+                this.clearFeedback();
+            } else {
+                this.showFeedback(result.message, false);
+            }
+        } catch (error) {
+            console.error('Error fetching question:', error);
+            this.showFeedback('Could not load a new question.', false);
+        }
     }
     
     renderQuestion() {
@@ -399,8 +347,9 @@ class MathQuestApp {
         } else if (this.currentDifficulty === 'medium') {
             this.changeDifficulty('hard');
         } else {
-            // Completed hard, move to next year if available
-            if (this.currentYear < 6) {
+            // Completed hard, award badge and move to next year
+            this.checkForBadges(true); // Check for year completion badge
+            if (this.currentYear < 10) { // Updated to 10
                 this.changeYear(this.currentYear + 1);
                 this.changeDifficulty('easy');
             } else {
@@ -411,12 +360,12 @@ class MathQuestApp {
     }
     
     getDifficultyStars() {
-        const starMap = { easy: 1, medium: 2, hard: 3 };
+        const starMap = { easy: 5, medium: 10, hard: 15 };
         return starMap[this.currentDifficulty];
     }
     
     getDifficultyXP() {
-        const xpMap = { easy: 10, medium: 20, hard: 30 };
+        const xpMap = { easy: 25, medium: 50, hard: 75 };
         return xpMap[this.currentDifficulty];
     }
     
@@ -433,34 +382,63 @@ class MathQuestApp {
         document.getElementById('feedbackSection').innerHTML = '';
     }
     
-    checkForBadges() {
+    checkForBadges(checkCompletion = false) {
         const newBadges = [];
-        
+
         // Streak badges
-        if (this.playerState.currentStreak === 5 && !this.playerState.badges.includes('streak5')) {
-            newBadges.push({ id: 'streak5', name: 'Hot Streak', icon: '🔥' });
+        const streakBadges = {
+            3: { id: 'streak3', name: 'Warming Up', icon: '👍' },
+            5: { id: 'streak5', name: 'Hot Streak', icon: '🔥' },
+            10: { id: 'streak10', name: 'On Fire', icon: '🚀' },
+            15: { id: 'streak15', name: 'Unstoppable', icon: '☄️' }
+        };
+        for (const streak in streakBadges) {
+            if (this.playerState.currentStreak >= streak && !this.playerState.badges.includes(streakBadges[streak].id)) {
+                newBadges.push(streakBadges[streak]);
+            }
         }
-        if (this.playerState.currentStreak === 10 && !this.playerState.badges.includes('streak10')) {
-            newBadges.push({ id: 'streak10', name: 'On Fire', icon: '🚀' });
-        }
-        
+
         // Star badges
-        if (this.playerState.totalStars >= 50 && !this.playerState.badges.includes('stars50')) {
-            newBadges.push({ id: 'stars50', name: 'Star Collector', icon: '⭐' });
+        const starBadges = {
+            25: { id: 'stars25', name: 'Star Gazer', icon: '✨' },
+            50: { id: 'stars50', name: 'Star Collector', icon: '⭐' },
+            100: { id: 'stars100', name: 'Star Master', icon: '🌟' },
+            150: { id: 'stars150', name: 'Galaxy Explorer', icon: '🌌' },
+            200: { id: 'stars200', name: 'Supernova', icon: '🎇' }
+        };
+        for (const stars in starBadges) {
+            if (this.playerState.totalStars >= stars && !this.playerState.badges.includes(starBadges[stars].id)) {
+                newBadges.push(starBadges[stars]);
+            }
         }
-        if (this.playerState.totalStars >= 100 && !this.playerState.badges.includes('stars100')) {
-            newBadges.push({ id: 'stars100', name: 'Star Master', icon: '🌟' });
-        }
-        
+
         // XP badges
-        if (this.playerState.totalXP >= 200 && !this.playerState.badges.includes('xp200')) {
-            newBadges.push({ id: 'xp200', name: 'Experienced', icon: '🏆' });
+        const xpBadges = {
+            100: { id: 'xp100', name: 'Getting Started', icon: '🎓' },
+            200: { id: 'xp200', name: 'Experienced', icon: '🏆' },
+            300: { id: 'xp300', name: 'Leveling Up', icon: '📈' },
+            500: { id: 'xp500', name: 'Prodigy', icon: '🧠' }
+        };
+        for (const xp in xpBadges) {
+            if (this.playerState.totalXP >= xp && !this.playerState.badges.includes(xpBadges[xp].id)) {
+                newBadges.push(xpBadges[xp]);
+            }
         }
-        
+
+        // Year completion badges
+        if (checkCompletion) {
+            const yearBadgeId = `year${this.currentYear - 1}Complete`;
+            if (!this.playerState.badges.includes(yearBadgeId)) {
+                newBadges.push({ id: yearBadgeId, name: `Year ${this.currentYear - 1} Graduate`, icon: '🏅' });
+            }
+        }
+
         newBadges.forEach(badge => {
-            this.playerState.badges.push(badge.id);
+            if (!this.playerState.badges.includes(badge.id)) {
+                this.playerState.badges.push(badge.id);
+            }
         });
-        
+
         if (newBadges.length > 0) {
             this.updateBadgesDisplay();
         }
@@ -488,20 +466,37 @@ class MathQuestApp {
     updateBadgesDisplay() {
         const badgesContainer = document.getElementById('badgesContainer');
         const badgeDefinitions = {
+            // Streaks
+            'streak3': { name: 'Warming Up', icon: '👍' },
             'streak5': { name: 'Hot Streak', icon: '🔥' },
             'streak10': { name: 'On Fire', icon: '🚀' },
+            'streak15': { name: 'Unstoppable', icon: '☄️' },
+            // Stars
+            'stars25': { name: 'Star Gazer', icon: '✨' },
             'stars50': { name: 'Star Collector', icon: '⭐' },
             'stars100': { name: 'Star Master', icon: '🌟' },
-            'xp200': { name: 'Experienced', icon: '🏆' }
+            'stars150': { name: 'Galaxy Explorer', icon: '🌌' },
+            'stars200': { name: 'Supernova', icon: '🎇' },
+            // XP
+            'xp100': { name: 'Getting Started', icon: '🎓' },
+            'xp200': { name: 'Experienced', icon: '🏆' },
+            'xp300': { name: 'Leveling Up', icon: '📈' },
+            'xp500': { name: 'Prodigy', icon: '🧠' },
+            // Year Completion
+            'year5Complete': { name: 'Year 5 Graduate', icon: '🏅' },
+            'year6Complete': { name: 'Year 6 Graduate', icon: '🏅' },
+            'year7Complete': { name: 'Year 7 Graduate', icon: '🏅' },
+            'year8Complete': { name: 'Year 8 Graduate', icon: '🏅' },
+            'year9Complete': { name: 'Year 9 Graduate', icon: '🏅' },
         };
-        
+
         badgesContainer.innerHTML = '';
-        
+
         if (this.playerState.badges.length === 0) {
             badgesContainer.innerHTML = '<p style="color: var(--color-text-secondary);">No badges earned yet</p>';
             return;
         }
-        
+
         this.playerState.badges.slice(-5).forEach(badgeId => {
             const badge = badgeDefinitions[badgeId];
             if (badge) {
@@ -517,29 +512,102 @@ class MathQuestApp {
     }
     
     // Parent Controls
+    async handleLogin() {
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value.trim();
+
+        if (!username || !password) {
+            alert('Please enter username and password');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.user = result.user;
+                this.showApp();
+            } else {
+                alert(result.message);
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            alert('An error occurred during login.');
+        }
+    }
+
+    async handleRegister() {
+        const username = document.getElementById('registerUsername').value.trim();
+        const password = document.getElementById('registerPassword').value.trim();
+        const role = document.getElementById('registerRole').value;
+
+        if (!username || !password) {
+            alert('Please enter username and password');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password, role })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.user = result.user;
+                this.showApp();
+            } else {
+                alert(result.message);
+            }
+        } catch (error) {
+            console.error('Registration error:', error);
+            alert('An error occurred during registration.');
+        }
+    }
+
+    showApp() {
+        document.getElementById('authContainer').classList.add('hidden');
+        document.getElementById('appContainer').classList.remove('hidden');
+
+        // If the user is a parent, hide the main game content and show a message.
+        if (this.user.role === 'parent') {
+            document.querySelector('.main-content').innerHTML = `
+                <div class="card">
+                    <div class="card__body">
+                        <h2>Welcome, Parent!</h2>
+                        <p>You are logged in as a parent. You can access Parent Controls from the header.</p>
+                    </div>
+                </div>
+            `;
+        } else {
+            this.loadState();
+            this.bindEvents();
+            this.updateUI();
+            this.loadNextQuestion();
+        }
+    }
+    
     openParentControls() {
-        document.getElementById('parentModal').classList.remove('hidden');
-        document.getElementById('parentPinInput').focus();
+        if (this.user && this.user.role === 'parent') {
+            document.getElementById('parentModal').classList.remove('hidden');
+            this.updateParentStats();
+        } else {
+            alert('You must be logged in as a parent to access this feature.');
+        }
     }
     
     closeParentControls() {
         document.getElementById('parentModal').classList.add('hidden');
-        document.getElementById('pinEntry').classList.remove('hidden');
-        document.getElementById('parentControls').classList.add('hidden');
-        document.getElementById('parentPinInput').value = '';
     }
-    
-    validatePin() {
-        const pin = document.getElementById('parentPinInput').value;
-        if (pin === '1234') {
-            document.getElementById('pinEntry').classList.add('hidden');
-            document.getElementById('parentControls').classList.remove('hidden');
-            this.updateParentStats();
-        } else {
-            alert('Incorrect PIN');
-        }
-    }
-    
+
     updateParentStats() {
         const statsDisplay = document.getElementById('statsDisplay');
         statsDisplay.innerHTML = `
@@ -562,9 +630,8 @@ class MathQuestApp {
                 recentQuestions: {}
             };
             
-            this.progressData = {
-                5: { easy: 0, medium: 0, hard: 0 }
-            };
+            this.progressData = {};
+            this.progressData[5] = { easy: 0, medium: 0, hard: 0 };
             
             this.currentYear = 5;
             this.currentDifficulty = 'easy';
