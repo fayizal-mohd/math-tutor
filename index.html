@@ -138,11 +138,21 @@
                         <div class="controls-grid">
                             <div class="control-item full-width">
                                 <label class="form-label">Gemini API Key</label>
-                                <div class="api-key-input-group">
-                                    <input type="password" class="form-control" id="geminiApiKeyInput" placeholder="Enter your Gemini API key">
-                                    <button class="btn btn--primary" id="saveApiKeyBtn">Save</button>
+                                <!-- State when key is configured -->
+                                <div id="apiKeyStatusConfigured" class="hidden">
+                                    <div class="api-key-status">
+                                        <p class="form-text">API Key is configured.</p>
+                                        <button class="btn btn--secondary btn--sm" id="deleteApiKeyBtn">Delete Key</button>
+                                    </div>
                                 </div>
-                                <p class="form-text">Your API key is stored securely and only used to generate questions.</p>
+                                <!-- State when key is NOT configured -->
+                                <div id="apiKeyStatusNotConfigured">
+                                    <div class="api-key-input-group">
+                                        <input type="password" class="form-control" id="geminiApiKeyInput" placeholder="Enter your Gemini API key">
+                                        <button class="btn btn--primary" id="saveApiKeyBtn">Save</button>
+                                    </div>
+                                    <p class="form-text">Your API key is stored securely and only used to generate questions.</p>
+                                </div>
                             </div>
                             <div class="control-item">
                                 <label class="form-label">Reset Progress</label>

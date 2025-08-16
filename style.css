@@ -1098,6 +1098,21 @@ select.form-control {
     flex-grow: 1;
 }
 
+.api-key-status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--color-bg-3);
+    padding: var(--space-8) var(--space-12);
+    border-radius: var(--radius-base);
+}
+
+.api-key-status .form-text {
+    margin: 0;
+    color: var(--color-success);
+    font-weight: var(--font-weight-medium);
+}
+
 .control-item {
   display: grid;
   gap: var(--space-8);

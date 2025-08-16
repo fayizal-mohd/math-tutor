@@ -643,6 +643,7 @@ class MathQuestApp {
 
             if (result.success) {
                 alert('API key saved successfully!');
+                this.renderApiKeyStatus(true);
             } else {
                 alert(`Error: ${result.message}`);
             }
@@ -652,11 +653,53 @@ class MathQuestApp {
         }
     }
 
-    openParentControls() {
+    async handleDeleteApiKey() {
+        if (!confirm('Are you sure you want to delete the API key? This will prevent new questions from being generated.')) {
+            return;
+        }
+        try {
+            const response = await fetch('/api/config/gemini', { method: 'DELETE' });
+            const result = await response.json();
+            if (result.success) {
+                alert('API key deleted successfully.');
+                this.renderApiKeyStatus(false);
+            } else {
+                alert(`Error: ${result.message}`);
+            }
+        } catch (error) {
+            console.error('Error deleting API key:', error);
+            alert('An error occurred while deleting the API key.');
+        }
+    }
+
+    renderApiKeyStatus(isConfigured) {
+        const configuredView = document.getElementById('apiKeyStatusConfigured');
+        const notConfiguredView = document.getElementById('apiKeyStatusNotConfigured');
+
+        configuredView.classList.toggle('hidden', !isConfigured);
+        notConfiguredView.classList.toggle('hidden', isConfigured);
+
+        if (isConfigured) {
+            document.getElementById('deleteApiKeyBtn').addEventListener('click', () => this.handleDeleteApiKey());
+        } else {
+            document.getElementById('saveApiKeyBtn').addEventListener('click', () => this.handleSaveApiKey());
+        }
+    }
+
+    async openParentControls() {
         if (this.user && this.user.role === 'parent') {
             document.getElementById('parentModal').classList.remove('hidden');
             this.updateParentStats();
-            document.getElementById('saveApiKeyBtn').addEventListener('click', () => this.handleSaveApiKey());
+
+            try {
+                const response = await fetch('/api/config/gemini');
+                const result = await response.json();
+                if (result.success) {
+                    this.renderApiKeyStatus(result.configured);
+                }
+            } catch (error) {
+                console.error('Could not fetch API key status:', error);
+            }
         } else {
             alert('You must be logged in as a parent to access this feature.');
         }
