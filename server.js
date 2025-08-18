@@ -189,23 +189,17 @@ app.post('/api/config/gemini', (req, res) => {
     });
 });
 
-app.post('/api/question', async (req, res) => {
+app.post('/api/question', (req, res) => {
     const { year, difficulty } = req.body;
 
-    try {
-        // Promisify the db.get call
-        const getApiKey = () => new Promise((resolve, reject) => {
-            db.get(`SELECT value FROM configuration WHERE key = ?`, ['geminiApiKey'], (err, row) => {
-                if (err) {
-                    reject(new Error('Database error while fetching API key.'));
-                }
-                resolve(row ? row.value : null);
-            });
-        });
+    db.get(`SELECT value FROM configuration WHERE key = ?`, ['geminiApiKey'], (err, row) => {
+        if (err) {
+            return res.status(500).json({ success: false, message: 'Database error while fetching API key.' });
+        }
 
-        const geminiApiKey = await getApiKey();
+        const geminiApiKey = row ? row.value : null;
 
-        if (!geminiApiKey) {
+        if (!geminiApiKey || geminiApiKey.trim() === '') {
             return res.status(500).json({ success: false, message: 'Gemini API key not configured. Please set it in the parent dashboard.' });
         }
 
@@ -376,36 +370,28 @@ app.post('/api/question', async (req, res) => {
 
         const yearTopics = topics[year] || topics[5];
         const topic = yearTopics[Math.floor(Math.random() * yearTopics.length)];
-
         const prompt = `You are an expert in the British mathematics curriculum. Generate a math question for a Year ${year} student in the UK, focusing on the topic: "${topic}". The question should be a word problem. Return the response as a JSON object with three keys: "question", "answer", and "topic". The "question" should be a string containing the word problem. The "answer" must be a single number (integer or decimal). The "topic" should be the topic provided in the prompt. Do not include any units or symbols in the answer, only the numeric value.`;
 
-        const response = await axios.post(GEMINI_API_URL, {
-            contents: [{ parts: [{ text: prompt }] }],
-        });
+        axios.post(GEMINI_API_URL, { contents: [{ parts: [{ text: prompt }] }] })
+            .then(response => {
+                let content = response.data.candidates[0].content.parts[0].text;
+                content = content.replace(/```json/g, '').replace(/```/g, '').trim();
+                const parsedContent = JSON.parse(content);
 
-        let content = response.data.candidates[0].content.parts[0].text;
-        content = content.replace(/```json/g, '').replace(/```/g, '').trim();
-        const parsedContent = JSON.parse(content);
+                if (isNaN(parsedContent.answer)) {
+                    throw new Error("Answer is not a number.");
+                }
 
-        if (isNaN(parsedContent.answer)) {
-            throw new Error("Answer is not a number.");
-        }
-
-        res.json({
-            success: true,
-            question: parsedContent.question,
-            answer: parsedContent.answer,
-            topic: parsedContent.topic
-        });
-
-    } catch (error) {
-        console.error('Error in /api/question:', error.message);
-        if (error.message.includes("AI returned an invalid format")) {
-            res.status(500).json({ success: false, message: 'Failed to parse question from AI. The AI returned an invalid format.' });
-        } else {
-            res.status(500).json({ success: false, message: 'Failed to generate question.' });
-        }
-    }
+                res.json({
+                    success: true,
+                    question: parsedContent
+                });
+            })
+            .catch(error => {
+                console.error("Error generating question from Gemini:", error.message);
+                res.status(500).json({ success: false, message: 'Failed to generate question.' });
+            });
+    });
 });
 
 
